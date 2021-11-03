@@ -48,3 +48,18 @@ body{
   height: 1vh;
   background-color: red;
 } */
+
+.loader {
+  border: 12px solid #282222; 
+  border-radius: 50%;
+  width: 150px;
+  height: 150px;
+  background-image: url(source/img/socialcodia.png);
+  background-size: cover;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  50% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

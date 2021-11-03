@@ -7,10 +7,15 @@ import {useSelector} from 'react-redux';
 import '../node_modules/materialize-css/dist/css/materialize.min.css';
 import '../node_modules/materialize-css/dist/js/materialize.min.js';
 import './App.css';
+import Loading from './components/Loading';
+import { useAutoLogin } from './hooks/useAutoLogin';
 
 const App = () =>
 {
-  return (
+  const loading = useAutoLogin();
+
+  return loading ? 
+  <Loading/> : (
     <Switch>
       <GuestRoute exact path='/' >
         <LoginPage/>
