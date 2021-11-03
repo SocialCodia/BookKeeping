@@ -80,10 +80,12 @@ class AuthController {
 
     logout = async (req,res,next) =>
     {
-        const {refreshToken,accessToken} = req.cookies;
-        console.log(refreshToken);
-        console.log(accessToken);
-
+        const {refreshToken} = req.cookies;
+        const {_id} = req.user;
+        const response = await tokenService.removeRefreshToken(_id,refreshToken);
+        res.clearCookie('refreshToken');
+        res.clearCookie('accessToken');
+        return (response.modifiedCount===1) ? res.json({success:true,message:'Logout Successfully'}) : next(ErrorHandler.unAuthorized());
     }
 
     refresh = async (req,res,next) =>
@@ -109,14 +111,6 @@ class AuthController {
             maxAge:1000*60*60*24*30
         })
         res.json({success:true,message:'Login Successfull',user:new UserDto(user)})
-    }
-
-    demo = async (req,res,next) =>
-    {
-        const {refreshToken} = req.cookies;
-        const{_id:userId} = tokenService.verifyRefreshToken(refreshToken);
-        const token = await tokenService.findRefreshToken(userId,refreshToken);
-        res.json(token)
     }
 
 }

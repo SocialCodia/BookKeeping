@@ -1,9 +1,11 @@
 const tokenService = require('../services/token-service');
+const userService = require('../services/user-service');
 const ErrorHandler = require('../utils/error-handler');
 const {TokenExpiredError} = require('jsonwebtoken');
+const { compareSync } = require('bcrypt');
 const auth = async (req,res,next) =>
 {
-    const {accessToken:accessTokenFromCookie,refereshToken:refereshTokenFromCookie}  = req.cookies;
+    const {accessToken:accessTokenFromCookie,refreshToken:refreshTokenFromCookie}  = req.cookies;
     try{
         if(!accessTokenFromCookie)
             return next(ErrorHandler.unAuthorized())
@@ -14,6 +16,7 @@ const auth = async (req,res,next) =>
     }
     catch(e)
     {
+        console.log('Token Error');
         if(e instanceof TokenExpiredError)
         {
             if(!refreshTokenFromCookie) return next(ErrorHandler.unAuthorized());
@@ -29,6 +32,9 @@ const auth = async (req,res,next) =>
                 const {accessToken,refreshToken} = tokenService.generateToken(payload);
                 await tokenService.updateRefreshToken(_id,refreshTokenFromCookie,refreshToken);
                 const user = await userService.findUser({email});
+                req.user = user;
+                req.cookies.accessToken = accessToken;
+                req.cookies.refreshToken = refreshToken;
                 res.cookie('accessToken',accessToken,{
                     maxAge:1000*60*60*24*30
                 })
@@ -44,6 +50,4 @@ const auth = async (req,res,next) =>
 }
 
 
-module.exports ={
-    auth
-}
+module.exports = auth;

@@ -27,9 +27,20 @@ class TokenService {
         
     }
 
+    removeRefreshToken = async (userId,token) =>
+    {
+        const tokens = {token}
+        return await TokenModel.updateOne({userId,'tokens.token':token},{$pull:{tokens}});
+    }
+
     verifyRefreshToken =  (refreshToken) =>
     {
         return jwt.verify(refreshToken,refreshTokenSecretKey);
+    }
+
+    verifyAccessToken = (accessToken) =>
+    {
+        return jwt.verify(accessToken,accessTokenSecretKey);
     }
 
     findRefreshToken = async (userId,token) =>
