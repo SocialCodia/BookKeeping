@@ -20,8 +20,6 @@ class TokenService {
         
         const tokens = {token}
         const isExist = await TokenModel.exists({userId})
-        console.log(isExist);
-        console.log(tokens);
         if(!isExist)
             return await TokenModel.create({userId,tokens})
         else
@@ -36,11 +34,12 @@ class TokenService {
 
     findRefreshToken = async (userId,token) =>
     {
-        const tokens = {token}
-        console.log({tokens});
-        return await TokenModel.findOne({userId,'tokens.token':token});
-        // console.log(a);
-        // return await TokenModel.findOne({userId,tokens});
+        return await TokenModel.findOne({userId,'tokens.token':token}).select({tokens:{$elemMatch:{token}}});
+    }
+
+    updateRefreshToken = async (userId,oldToken,token) =>
+    {
+        return await TokenModel.findOneAndUpdate({userId,'tokens.token':oldToken},{$set:{'tokens.$.token':token}});
     }
 
 }

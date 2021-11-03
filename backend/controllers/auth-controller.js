@@ -70,8 +70,10 @@ class AuthController {
         if(!user) return next(ErrorHandler.notFound('No Account Found'));
         const {_id:userId} = user;
         const type = process.env.TYPE_FORGOT_PASSWORD || 2;
-        const isValid = await otpService.verifyOtp(userId,otp,type);
-        if(!isValid) return next(ErrorHandler.badRequest('Invalid OTP'));
+        const response = await otpService.verifyOtp(userId,otp,type);
+        console.log(response);
+        if(response==='INVALID') return next(ErrorHandler.badRequest('Invalid OTP'));
+        if(response==='EXPIRED') return next(ErrorHandler.badRequest('Otp has been Expired'));
         const {modifiedCount} = await userService.updatePassword(userId,password);
         return modifiedCount===1 ? res.json({success:true,message:'Password has been reset successfully'}) : next(ErrorHandler.serverError('Failed to Reset your password'));
     }
@@ -87,17 +89,19 @@ class AuthController {
     refresh = async (req,res,next) =>
     {
         const {refreshToken:refreshTokenFromCookie} = req.cookies;
-        if(!refreshTokenFromCookie) return next(new ErrorHandler.unAuthorized());
+        if(!refreshTokenFromCookie) return next(ErrorHandler.unAuthorized());
         const userData = await tokenService.verifyRefreshToken(refreshTokenFromCookie);
-        const token = await tokenService.findRefreshToken(userData._id,refreshTokenFromCookie);
-        if(!token) return next(new ErrorHandler.unAuthorized());
+        const {_id,email,username} = userData;
+        const token = await tokenService.findRefreshToken(_id,refreshTokenFromCookie);
+        if(!token) return next(ErrorHandler.unAuthorized());
         const payload = {
-            _id:userData._id,
-            userType:userData.userType
+            _id,
+            email,
+            username
         }
-        const {accessToken,refreshToken} = await tokenService.generateToken(payload);
-        await tokenService.updateRefreshToken(userData._id,refreshToken);
-        req.user = userData;
+        const {accessToken,refreshToken} = tokenService.generateToken(payload);
+        await tokenService.updateRefreshToken(_id,refreshTokenFromCookie,refreshToken);
+        const user = await userService.findUser({email});
         res.cookie('accessToken',accessToken,{
             maxAge:1000*60*60*24*30
         })
@@ -110,9 +114,9 @@ class AuthController {
     demo = async (req,res,next) =>
     {
         const {refreshToken} = req.cookies;
-        console.log('Refresh Token Is '+refreshToken);
         const{_id:userId} = tokenService.verifyRefreshToken(refreshToken);
-        await tokenService.findRefreshToken(userId,refreshToken);
+        const token = await tokenService.findRefreshToken(userId,refreshToken);
+        res.json(token)
     }
 
 }
